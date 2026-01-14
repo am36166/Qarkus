@@ -1,5 +1,14 @@
-*
-!target/*-runner
-!target/*-runner.jar
-!target/lib/*
-!target/quarkus-app/*
+# Ignore git files
+.git
+.gitignore
+
+# Ignore local build output (Docker will build inside container)
+target/
+
+# Ignore IDE files
+.vscode
+.idea
+
+# Ignore OS junk
+*.log
+*.tmp
