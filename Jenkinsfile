@@ -1,5 +1,5 @@
 pipeline {
-    agent jenkins
+    agent { label 'jenkins-agent' }
 
     environment {
         DOCKER_REPO = "amdevops36/hello-world"
