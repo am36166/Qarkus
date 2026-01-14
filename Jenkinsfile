@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DOCKER_REPO = "amdevops36/hello-world"
-        IMAGE_TAG = ""
     }
 
     stages {
@@ -12,6 +11,7 @@ pipeline {
             steps {
                 script {
                     echo "Current branch: ${env.BRANCH_NAME}"
+
                     if (env.BRANCH_NAME == 'main') {
                         env.IMAGE_TAG = "prod"
                     } else if (env.BRANCH_NAME == 'dev') {
@@ -19,15 +19,16 @@ pipeline {
                     } else {
                         env.IMAGE_TAG = env.BRANCH_NAME.replaceAll('/', '-')
                     }
+
+                    echo "Using image tag: ${env.IMAGE_TAG}"
                 }
-                echo "Using image tag: ${env.IMAGE_TAG}"
             }
         }
 
         stage('Build Image') {
             steps {
                 sh """
-                  docker build -t $DOCKER_REPO:$IMAGE_TAG .
+                  docker build -t ${env.DOCKER_REPO}:${env.IMAGE_TAG} .
                 """
             }
         }
@@ -39,9 +40,9 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh """
+                    sh '''
                       echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                    """
+                    '''
                 }
             }
         }
@@ -49,7 +50,7 @@ pipeline {
         stage('Push Image') {
             steps {
                 sh """
-                  docker push $DOCKER_REPO:$IMAGE_TAG
+                  docker push ${env.DOCKER_REPO}:${env.IMAGE_TAG}
                 """
             }
         }
