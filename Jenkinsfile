@@ -2,47 +2,56 @@ pipeline {
     agent any
 
     environment {
-        APP_NAME = "hello-quarkus"
-        IMAGE_NAME = "amdevops36/hello-world"
-        CONTAINER_NAME = "hello-quarkus-app"
-        APP_PORT = "8084"
+        DOCKER_REPO = "amdevops36/hello-world"
+        IMAGE_TAG = ""
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Prepare Tag') {
             steps {
-                checkout scm
+                script {
+                    echo "Current branch: ${env.BRANCH_NAME}"
+                    if (env.BRANCH_NAME == 'main') {
+                        env.IMAGE_TAG = "prod"
+                    } else if (env.BRANCH_NAME == 'dev') {
+                        env.IMAGE_TAG = "dev"
+                    } else {
+                        env.IMAGE_TAG = env.BRANCH_NAME.replaceAll('/', '-')
+                    }
+                }
+                echo "Using image tag: ${env.IMAGE_TAG}"
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Image') {
             steps {
-                sh '''
-                    echo "Building Docker Image for ${APP_NAME}: ${IMAGE_NAME}:${BUILD_NUMBER}"
-                    docker build -t $IMAGE_NAME:$BUILD_NUMBER .
-                '''
+                sh """
+                  docker build -t $DOCKER_REPO:$IMAGE_TAG .
+                """
             }
         }
 
-        stage('Deploy (main only)') {
-            when {
-                branch 'main'
-            }
+        stage('Docker Login') {
             steps {
-                sh '''
-                    docker run -d \
-                      -p $APP_PORT:8084 \
-                      --name $CONTAINER_NAME \
-                      $IMAGE_NAME:$BUILD_NUMBER
-                '''
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-credentiels',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                      echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    """
+                }
             }
         }
-    }
 
-    post {
-        always {
-            echo "Pipeline finished for branch: ${env.BRANCH_NAME}"
+        stage('Push Image') {
+            steps {
+                sh """
+                  docker push $DOCKER_REPO:$IMAGE_TAG
+                """
+            }
         }
     }
 }
