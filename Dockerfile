@@ -6,8 +6,6 @@ COPY pom.xml .
 
 COPY src ./src
 
-COPY settings.xml /usr/share/maven/conf
-
 RUN --mount=type=cache,target=/root/.m2 \
     mvn dependency:go-offline -Dquarkus.package.type=fast-jar
 
