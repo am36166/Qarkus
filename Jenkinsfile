@@ -5,11 +5,7 @@ pipeline {
         APP_NAME = "hello-quarkus"
         IMAGE_NAME = "amdevops36/hello-world"
         CONTAINER_NAME = "hello-quarkus-app"
-        APP_PORT = "8080"
-    }
-
-    tools {
-        maven 'M3'
+        APP_PORT = "8084"
     }
 
     stages {
